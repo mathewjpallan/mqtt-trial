@@ -13,32 +13,35 @@ public class MQTTConnection {
         Configuration object that represents the contents of application.conf
      */
     private final Config config;
-    private final String deviceId;
+    private final String clientId;
+
+    private final String password;
     private IMqttClient mqttClient;
 
-    public MQTTConnection(Config config, String deviceId) throws ServerException {
+    public MQTTConnection(Config config, String clientId, String clientPassword) throws ServerException {
         this.config = config;
-        this.deviceId = deviceId;
+        this.clientId = clientId;
+        this.password = clientPassword;
         this.mqttClient = initMQTTClient();
         connect();
     }
 
     public IMqttClient initMQTTClient() throws ServerException {
         try {
-            return new MqttClient(config.getString("broker.url"), deviceId);
+            return new MqttClient(config.getString("broker.url"), clientId);
         } catch (MqttException e) {
             throw new ServerException(e);
         }
     }
 
-    public void connect() throws ServerException {
+    private void connect() throws ServerException {
         MqttConnectOptions options = new MqttConnectOptions();
-        options.setAutomaticReconnect(config.getBoolean("device.automatic.reconnect"));
-        options.setCleanSession(config.getBoolean("device.clean.session"));
-        options.setConnectionTimeout(config.getInt("device.connection.timeout"));
-        if(config.getBoolean("device.auth.enabled")) {
-            options.setUserName(deviceId);
-            options.setPassword(config.getString("device.auth.password").toCharArray());
+        options.setAutomaticReconnect(config.getBoolean("broker.automatic.reconnect"));
+        options.setCleanSession(config.getBoolean("broker.clean.session"));
+        options.setConnectionTimeout(config.getInt("broker.connection.timeout"));
+        if(config.getBoolean("broker.auth.enabled")) {
+            options.setUserName(clientId);
+            options.setPassword(password.toCharArray());
         }
         try {
             mqttClient.connect(options);
@@ -55,9 +58,9 @@ public class MQTTConnection {
         }
     }
 
-    public void publish(String topic, byte[] payload) throws ServerException {
+    public void publish(String topic, int qos, byte[] payload) throws ServerException {
         MqttMessage msg = new MqttMessage(payload);
-        msg.setQos(config.getInt("device.publish.qos"));
+        msg.setQos(qos);
         try {
             mqttClient.publish(topic, msg);
         } catch (MqttException e) {
