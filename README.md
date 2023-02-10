@@ -1,5 +1,5 @@
 # mqtt-trial
-Trying out MQTT protocol
+Trying out MQTT protocol with EMQX as the broker and Eclipse Paho client as the mqtt client library. 
 
 ## Pre-requisites
 1. Install jdk 8 and docker on your workstation
