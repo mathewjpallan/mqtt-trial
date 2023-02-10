@@ -17,12 +17,13 @@ public class SmartDevice implements Runnable {
         this.deviceId = deviceId;
         this.config = config;
         mqttConnection = new MQTTConnection(config, deviceId);
-        subscribe("");
+        subscribe(config.getString("device.subscribe.topic"));
     }
 
     private void subscribe(String subscribeTopic) throws ServerException {
         mqttConnection.subscribe("device/deviceType/" + deviceId + "/" + subscribeTopic,  (topic, msg) -> {
             byte[] payload = msg.getPayload();
+            //all the actions for the incoming message from the server
             softwareVersion = new String(payload);
         });
     }
@@ -38,7 +39,7 @@ public class SmartDevice implements Runnable {
             temperature = (float) ((Math.random() * (45 - 14)) + 14);
             pressure = (float) ((Math.random() * (32 - 28)) + 28);
             try {
-                publish("weather", (deviceId+ "," + temperature + "," + pressure).getBytes());
+                publish(config.getString("device.publish.topic"), (softwareVersion + "," + deviceId+ "," + temperature + "," + pressure).getBytes());
                 Thread.sleep(config.getInt("device.frequency"));
             } catch (ServerException e) {
                 throw new RuntimeException(e);
